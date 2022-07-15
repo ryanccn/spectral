@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    @apply text-black dark:text-white;
+    @apply antialiased tracking-tight;
+  }
+
+  /* *,
+  a,
+  button {
+    cursor: default;
+    user-select: none;
+  } */
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "/@/*": ["./src/*"],
+      "@core/*": ["./src/core/*"]
+    }
+  },
+  "files": ["src/index.ts"],
+  "include": ["src/**/*.ts", "../../types/**/*.d.ts"]
+}

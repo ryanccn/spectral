@@ -1,0 +1,18 @@
+# node
+node_modules
+
+# macOS
+.DS_Store
+*.local
+thumbs.db
+
+# yarn
+yarn-error.log
+
+# electron
+dist
+.electron-vendors.cache.json
+
+# vscode
+.vscode/
+
