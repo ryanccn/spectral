@@ -4,13 +4,13 @@ import { got } from 'got';
 
 import { ensuredir } from '@core/lib/ensure';
 import { downloadLibsAndAssets } from '@core/install/librariesAndAssets';
-import { getManifest } from '@core/install/minecraft';
+import { getManifest } from '/@/core/install/vanilla';
 import { download } from '@core/lib/download';
-import { getInstanceDir, getVersionDir } from '../lib/paths';
+import { getInstanceDir, getVersionDir } from '@core/lib/paths';
+
+import { performance } from 'perf_hooks';
 
 import type { FabricLoaderManifest, Version } from '@core/install/types';
-import { writeVersionConfig } from '../lib/versionConfig';
-// import { writeVersionConfig } from '../lib/versionConfig';
 
 export interface VersionArgs {
   vanilla: string;
@@ -26,11 +26,7 @@ export const fetchFabricManifest = async (v: VersionArgs) => {
   return await got(INSTALLER_URL(v)).json<FabricLoaderManifest>();
 };
 
-export const install = async (
-  name: string,
-  versions: VersionArgs,
-  includeM1Patch: boolean = false
-) => {
+export const install = async (name: string, versions: VersionArgs) => {
   const timeStart = performance.now();
 
   const v = await getManifest()
@@ -72,7 +68,7 @@ export const install = async (
 
   console.log('Downloading Fabric manifest');
 
-  console.log('fabric manifest:', await fetchFabricManifest(versions));
+  // console.log('fabric manifest:', await fetchFabricManifest(versions));
 
   const fabricManifest = await fetchFabricManifest(versions);
 
@@ -105,11 +101,7 @@ export const install = async (
     expectedHash: fullVersion.downloads.client.sha1,
   });
 
-  await downloadLibsAndAssets(versionDir, fullVersion, includeM1Patch);
-
-  if (includeM1Patch) {
-    await writeVersionConfig(name, { usingM1Patch: true });
-  }
+  await downloadLibsAndAssets(versionDir, fullVersion);
 
   const timeEnd = performance.now();
 

@@ -88,19 +88,14 @@ app
   .then(createWindow)
   .then(() => {
     ipcMain.on('test', async () => {
-      // await installJRE();
-      await install(
-        'testReleaseM1',
-        {
-          vanilla: '1.18.2',
-          loader: '0.13.3',
-        },
-        true
-      );
+      await install('test', {
+        vanilla: '1.19',
+        loader: '0.14.8',
+      });
 
-      console.log('{{{{{ # }}}}} Launching...');
+      console.log('> Launching...');
 
-      await launch('testReleaseM1');
+      await launch('test');
     });
   })
   .catch((e) => console.error('Failed to create window:', e));

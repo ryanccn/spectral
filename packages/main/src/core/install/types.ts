@@ -34,11 +34,11 @@ interface LibraryDownload {
 export interface MojangLibrary {
   downloads: {
     artifact: LibraryDownload;
-    classifiers: { [yada: string]: LibraryDownload };
+    // classifiers: { [yada: string]: LibraryDownload };
   };
   name: string;
   rules?: Rule[];
-  natives?: { [a: string]: string };
+  // natives?: { [a: string]: string };
 }
 export interface MavenLibrary {
   name: string;

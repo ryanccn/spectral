@@ -1,19 +1,19 @@
 import { app } from 'electron';
 import { execa } from 'execa';
 
-import { Version } from '@core/install/types';
-
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { matchRule } from '../lib/matchRule';
 import { randomUUID } from 'crypto';
-import { javaBinaries } from './javaBinary';
-import { mavenToFile } from '../lib/mavenToFile';
+
+// import { javaBinaries } from './javaBinary';
+
+import { type Version } from '@core/install/types';
+import { matchRule } from '@core/lib/matchRule';
+import { mavenToFile } from '@core/lib/mavenToFile';
+import { exists } from '@core/lib/exists';
+import { getInstanceDir } from '@core/lib/paths';
+
 import pLimit from 'p-limit';
-import { exists } from '../lib/exists';
-import { readVersionConfig } from '../lib/versionConfig';
-import { getLibraries, getNativesDir } from '../install/m1Patch';
-import { getInstanceDir } from '../lib/paths';
 
 const getJAR = async (instanceName: string) =>
   join(
@@ -44,6 +44,10 @@ export const classPath = async (instanceName: string) => {
 
   v.libraries.forEach((lib) => {
     if ('downloads' in lib) {
+      if (lib.rules && !matchRule(lib.rules)) {
+        return;
+      }
+
       ret.push(
         join(app.getPath('userData'), 'libraries', lib.downloads.artifact.path)
       );
@@ -51,9 +55,6 @@ export const classPath = async (instanceName: string) => {
       ret.push(mavenToFile(lib.name));
     }
   });
-
-  const { usingM1Patch } = await readVersionConfig(instanceName);
-  if (usingM1Patch) ret.push(...(await getLibraries()));
 
   ret.push(await getJAR(instanceName));
 
@@ -108,22 +109,18 @@ export const getJVMArgs = async (instanceName: string) => {
     }
   }
 
-  const { usingM1Patch } = await readVersionConfig(instanceName);
-
   // Run substitutions
   jvmArgs = await Promise.all(
     jvmArgs.map(async (original) => {
       return original
         .replace(
           '${natives_directory}',
-          usingM1Patch
-            ? getNativesDir()
-            : join(
-                await getInstanceDir(instanceName),
-                'versions',
-                'default',
-                'natives'
-              )
+          join(
+            await getInstanceDir(instanceName),
+            'versions',
+            'default',
+            'natives'
+          )
         )
         .replace('${launcher_name}', app.getName())
         .replace('${launcher_version}', app.getVersion())
@@ -187,7 +184,7 @@ export const generateArguments = async (instanceName: string) => {
 
 export const launch = async (instanceName: string) => {
   const args = await generateArguments(instanceName);
-  await execa((await javaBinaries())[0], args, {
+  await execa('java', args, {
     cwd: await getInstanceDir(instanceName),
     detached: true,
   });

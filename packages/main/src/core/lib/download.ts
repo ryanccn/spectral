@@ -4,38 +4,35 @@ import { createWriteStream } from 'fs';
 import { copyFile, rm } from 'fs/promises';
 import { pipeline } from 'stream/promises';
 
-import { ensuredir, ensurefile } from './ensure';
 import { app } from 'electron';
 import { join } from 'path';
 import { exists } from './exists';
-import { execa } from 'execa';
+import { getSHA1Hash } from './sha1';
+import { ensuredir, ensurefile } from './ensure';
 
 const CACHE_DIR = join(app.getPath('cache'), 'Spectral');
 
-const getSHA1Hash = async (file: string) =>
-  await execa('shasum', ['--algorithm', '1', file]).then((r) => r.stdout);
-
 const generateSha1Cachepath = (hash: string) =>
   join(CACHE_DIR, `sha1`, hash.substring(0, 2), hash);
-const generateETagCachepath = (etag: string) =>
-  join(CACHE_DIR, `etag`, etag.substring(0, 2), etag);
 
-export const download = async ({
-  url,
-  // options,
-  destination,
-  expectedHash,
-}: {
+interface Options {
   url: string;
   // options?: OptionsOfBufferResponseBody;
   expectedHash?: string;
   destination: string;
-}) => {
+}
+
+const downloadRaw = async ({
+  url,
+  // options,
+  destination,
+  expectedHash,
+}: Options) => {
   if (await exists(destination)) {
     if (expectedHash) {
       const hash = await getSHA1Hash(destination);
       if (hash === expectedHash) {
-        console.log('Already downloaded, hash matches, whoopee!');
+        // console.log('Already downloaded, hash matches, whoopee!');
         return;
       }
     }
@@ -48,7 +45,7 @@ export const download = async ({
 
   if (expectedHash && (await exists(generateSha1Cachepath(expectedHash)))) {
     // console.log(3);
-    console.log(`Using cached file (SHA-1) ${expectedHash}`);
+    // console.log(`Using cached file (SHA-1) ${expectedHash}`);
     await copyFile(generateSha1Cachepath(expectedHash), destination);
     return;
   }
@@ -82,7 +79,9 @@ export const download = async ({
 
   if (expectedHash && sha1Hash !== expectedHash) {
     throw new Error(
-      `SHA-1 hash mismatch on ${url}: ${expectedHash} !== ${sha1Hash}`
+      `SHA-1 hash mismatch on ${url}: ${JSON.stringify(
+        expectedHash
+      )} !== ${JSON.stringify(sha1Hash)}`
     );
   }
 
@@ -94,4 +93,16 @@ export const download = async ({
   //   await ensurefile(generateETagCachepath(etag));
   //   await copyFile(destination, generateETagCachepath(etag));
   // }
+};
+
+export const download = async (opts: Options) => {
+  try {
+    await downloadRaw(opts);
+  } catch {
+    try {
+      await downloadRaw(opts);
+    } catch {
+      await downloadRaw(opts);
+    }
+  }
 };

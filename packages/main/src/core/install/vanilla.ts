@@ -1,15 +1,17 @@
-import { app } from 'electron';
+// import { app } from 'electron';
 import { got } from 'got';
 
 import { ensuredir } from '/@/core/lib/ensure';
 import { downloadLibsAndAssets } from '@core/install/librariesAndAssets';
 import { download } from '@core/lib/download';
 import type { Manifest, Version } from '@core/install/types';
+import { getInstanceDir } from '@core/lib/paths';
+import { writeVersionConfig } from '@core/lib/versionConfig';
 
 import { join } from 'path';
 import { readFile, rm } from 'fs/promises';
-import { getInstanceDir } from '../lib/paths';
-import { writeVersionConfig } from '../lib/versionConfig';
+
+import { performance } from 'perf_hooks';
 
 const MANIFEST_URL =
   'https://launchermeta.mojang.com/mc/game/version_manifest.json';
@@ -18,11 +20,7 @@ export const getManifest = async (): Promise<Manifest> => {
   return got(MANIFEST_URL).json<Manifest>();
 };
 
-export const install = async (
-  name: string,
-  vanillaVersion: string,
-  includeM1Patch: boolean = false
-) => {
+export const install = async (name: string, vanillaVersion: string) => {
   const timeStart = performance.now();
 
   const v = await getManifest().then(
@@ -64,11 +62,7 @@ export const install = async (
     expectedHash: fullVersion.downloads.client.sha1,
   });
 
-  await downloadLibsAndAssets(versionDir, fullVersion, includeM1Patch);
-
-  if (includeM1Patch) {
-    await writeVersionConfig(name, { usingM1Patch: true });
-  }
+  await downloadLibsAndAssets(versionDir, fullVersion);
 
   const timeEnd = performance.now();
 

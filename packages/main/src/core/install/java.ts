@@ -1,5 +1,5 @@
 import { app } from 'electron';
-import { got, isResponseOk } from 'got';
+import { got } from 'got';
 import { execa } from 'execa';
 
 import { join } from 'path';
