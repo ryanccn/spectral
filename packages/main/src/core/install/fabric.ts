@@ -91,15 +91,17 @@ export const install = async (name: string, versions: VersionArgs) => {
       ? fabricManifest.launcherMeta.mainClass
       : fabricManifest.launcherMeta.mainClass.client;
 
-  await writeFile(destJSON, JSON.stringify(fullVersion));
-
-  console.log('Downloading main JAR');
-
-  await download({
-    url: fullVersion.downloads.client.url,
-    destination: join(versionDir, `default.jar`),
-    expectedHash: fullVersion.downloads.client.sha1,
+  fullVersion.libraries.push({
+    name: `com.mojang:minecraft:${fullVersion.id}`,
+    downloads: {
+      artifact: {
+        ...fullVersion.downloads.client,
+        path: `com/mojang/minecraft/${fullVersion.id}/minecraft-${fullVersion.id}.jar`,
+      },
+    },
   });
+
+  await writeFile(destJSON, JSON.stringify(fullVersion));
 
   await downloadLibsAndAssets(versionDir, fullVersion);
 

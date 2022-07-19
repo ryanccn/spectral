@@ -6,10 +6,10 @@ import { downloadLibsAndAssets } from '@core/install/librariesAndAssets';
 import { download } from '@core/lib/download';
 import type { Manifest, Version } from '@core/install/types';
 import { getInstanceDir } from '@core/lib/paths';
-import { writeVersionConfig } from '@core/lib/versionConfig';
+// import { writeVersionConfig } from '@core/lib/versionConfig';
 
 import { join } from 'path';
-import { readFile, rm } from 'fs/promises';
+import { readFile, rm, writeFile } from 'fs/promises';
 
 import { performance } from 'perf_hooks';
 
@@ -54,13 +54,17 @@ export const install = async (name: string, vanillaVersion: string) => {
     await readFile(destJSON, { encoding: 'utf8' })
   ) as Version;
 
-  console.log('Downloading main JAR');
-
-  await download({
-    url: fullVersion.downloads.client.url,
-    destination: join(versionDir, `default.jar`),
-    expectedHash: fullVersion.downloads.client.sha1,
+  fullVersion.libraries.push({
+    name: `com.mojang:minecraft:${fullVersion.id}`,
+    downloads: {
+      artifact: {
+        ...fullVersion.downloads.client,
+        path: `com/mojang/minecraft/${fullVersion.id}/minecraft-${fullVersion.id}.jar`,
+      },
+    },
   });
+
+  await writeFile(destJSON, JSON.stringify(fullVersion));
 
   await downloadLibsAndAssets(versionDir, fullVersion);
 

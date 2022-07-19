@@ -15,14 +15,6 @@ import { getInstanceDir } from '@core/lib/paths';
 
 import pLimit from 'p-limit';
 
-const getJAR = async (instanceName: string) =>
-  join(
-    await getInstanceDir(instanceName),
-    'versions',
-    'default',
-    'default.jar'
-  );
-
 const getFullVersion = async (instanceName: string) => {
   const versionJSON = join(
     await getInstanceDir(instanceName),
@@ -56,8 +48,6 @@ export const classPath = async (instanceName: string) => {
     }
   });
 
-  ret.push(await getJAR(instanceName));
-
   const lim = pLimit(10);
 
   await Promise.all(
@@ -78,7 +68,6 @@ export const getJVMArgs = async (instanceName: string) => {
   const jvmRawArgs = version.arguments.jvm;
 
   let jvmArgs: string[] = [
-    `-Dminecraft.client.jar=${getJAR(instanceName)}`,
     '-XX:+UnlockExperimentalVMOptions',
     '-XX:+UseG1GC',
     '-XX:G1NewSizePercent=20',
@@ -125,7 +114,6 @@ export const getJVMArgs = async (instanceName: string) => {
         .replace('${launcher_name}', app.getName())
         .replace('${launcher_version}', app.getVersion())
         .replace('${classpath}', await classPath(instanceName))
-        .replace('${primary_jar}', await getJAR(instanceName))
         .replace('${classpath_separator}', ':')
         .replace(
           '${library_directory}',
